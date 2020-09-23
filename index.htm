@@ -1,0 +1,133 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Hammersmith+One">
+    <script src="lib/tmi.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            font-family: "Hammersmith One";
+            font-size: 20pt;
+        }
+
+        #container {
+            height: 50px;
+            border-style: solid;
+            border-color: grey;
+            /* Border Color Here */
+        }
+
+        #barBox {
+            background-color: red;
+            /* Bar BG Color Here */
+            height: 50px;
+            width: 50%;
+            text-align: center;
+            vertical-align: center;
+            color: white;
+            /* Progress Text Color Here */
+        }
+
+        #goalText {
+            float: right;
+            padding-right: 10px;
+            padding: 10px 10px;
+            color: black;
+            /* Goal Text Color Here */
+        }
+
+        #progressText {
+            float: center;
+            padding: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="container">
+        <div id="goalText"></div>
+        <div id="barBox">
+            <div id="progressText"></div>
+        </div>
+    </div>
+    <script>
+        let _goal = 1000 // SET GOAL AMOUNT HERE
+        let _progress = 0
+
+        const tmiConfig = {
+            'channels': [
+                'thoseEyes'
+            ]
+        }
+
+        const client = new tmi.client(tmiConfig)
+
+        client.on('message', onMessageHandler)
+        client.on('connected', onConnectedHandler)
+
+        client.connect()
+
+        function onMessageHandler(target, context, msg, self) {
+
+            const trimmed = msg.trim()
+
+            if (context.mod || (context['badges-raw'] != null && context['badges-raw'].startsWith('broadcaster'))) {
+
+                if (trimmed.startsWith('!donoadd')) {
+
+                    var amount = parseInt(trimmed.split(' ')[1])
+                    
+                    if (amount !== NaN) {
+                        addAmount(amount)
+                    }
+                } else if (trimmed.startsWith('!donogoal')) {
+
+                    var amount = parseInt(trimmed.split(' ')[1])
+                    
+                    if (amount !== NaN) {
+                        setGoal(amount)
+                    }
+                }
+            }
+        }
+
+        function onConnectedHandler(addr, port) {
+            console.log(`* Connected to ${addr}:${port}`)
+        }
+
+
+        function setBar(percentage, progress, goal) {
+            barBox.style.width = `${percentage}%`
+            progressText.innerHTML = `£${progress}`
+            goalText.innerHTML = `GOAL: £${goal}`
+        }
+
+        function updateBar() {
+            let percentage = calculatePercentage(_progress, _goal)
+            setBar(percentage, _progress, _goal)
+        }
+
+        function addAmount(amount) {
+            _progress += amount
+            updateBar()
+        }
+
+        function setGoal(goalAmount) {
+            _goal = goalAmount
+            updateBar()
+        }
+
+        function calculatePercentage(progress, goal) {
+            let per = Math.round((_progress / _goal) * 100)
+
+            if (per > 100) {
+                per = 100
+            }
+            return per
+        }
+
+    </script>
+</body>
+
+</html>
